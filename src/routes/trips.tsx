@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, MapPin } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MapPin, Truck, User, Calendar, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/tms/PageHeader";
 import { EmptyState } from "@/components/tms/EmptyState";
@@ -9,8 +9,9 @@ import { useTrips, useVehicles, useDrivers } from "@/hooks/use-tms";
 import type { Trip } from "@/lib/tms-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { FormField, IconInput } from "@/components/tms/FormField";
 import {
   Dialog,
   DialogContent,
@@ -228,18 +229,35 @@ function TripsPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Trip" : "New Trip"}</DialogTitle>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl">
+              {editing ? "Edit Trip" : "Schedule New Trip"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {editing
+                ? "Update trip details below."
+                : "Assign a vehicle, driver, and route. Fields marked * are required."}
+            </p>
           </DialogHeader>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Vehicle</Label>
+          <Separator />
+          <form onSubmit={submit} className="space-y-5" noValidate>
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Assignment
+              </h3>
+            </div>
+            <FormField label="Vehicle" required error={errors.vehicleId}>
               <Select
                 value={form.vehicleId}
                 onValueChange={(v) => setForm({ ...form, vehicleId: v })}
               >
-                <SelectTrigger><SelectValue placeholder="Select a vehicle" /></SelectTrigger>
+                <SelectTrigger className={errors.vehicleId ? "border-destructive" : ""}>
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select a vehicle" />
+                  </div>
+                </SelectTrigger>
                 <SelectContent>
                   {vehicles.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
@@ -248,35 +266,43 @@ function TripsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.vehicleId && <p className="text-xs text-destructive">{errors.vehicleId}</p>}
-            </div>
-            <div className="grid gap-2">
-              <Label>Driver</Label>
+            </FormField>
+            <FormField label="Driver" required error={errors.driverId}>
               <Select
                 value={form.driverId}
                 onValueChange={(v) => setForm({ ...form, driverId: v })}
               >
-                <SelectTrigger><SelectValue placeholder="Select a driver" /></SelectTrigger>
+                <SelectTrigger className={errors.driverId ? "border-destructive" : ""}>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select a driver" />
+                  </div>
+                </SelectTrigger>
                 <SelectContent>
                   {drivers.map((d) => (
                     <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.driverId && <p className="text-xs text-destructive">{errors.driverId}</p>}
+            </FormField>
+
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Schedule
+              </h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Date</Label>
-                <Input
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormField label="Date" required error={errors.date}>
+                <IconInput
+                  icon={Calendar}
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  invalid={!!errors.date}
                 />
-                {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
-              </div>
-              <div className="grid gap-2">
-                <Label>Status</Label>
+              </FormField>
+              <FormField label="Status">
                 <Select
                   value={form.status}
                   onValueChange={(v: Trip["status"]) => setForm({ ...form, status: v })}
@@ -289,32 +315,42 @@ function TripsPage() {
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </FormField>
             </div>
-            <div className="grid gap-2">
-              <Label>Origin</Label>
-              <Input
+
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Route
+              </h3>
+            </div>
+            <FormField label="Origin">
+              <IconInput
+                icon={Navigation}
                 value={form.origin}
                 onChange={(e) => setForm({ ...form, origin: e.target.value })}
                 placeholder="Warehouse A"
+                maxLength={120}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label>Destination</Label>
-              <Input
+            </FormField>
+            <FormField label="Destination" required error={errors.destination}>
+              <IconInput
+                icon={MapPin}
                 value={form.destination}
                 onChange={(e) => setForm({ ...form, destination: e.target.value })}
                 placeholder="Customer site"
+                maxLength={120}
+                invalid={!!errors.destination}
               />
-              {errors.destination && (
-                <p className="text-xs text-destructive">{errors.destination}</p>
-              )}
-            </div>
-            <DialogFooter>
+            </FormField>
+
+            <DialogFooter className="gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">{editing ? "Save" : "Create"}</Button>
+              <Button type="submit">
+                {editing ? "Save Changes" : "Create Trip"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
