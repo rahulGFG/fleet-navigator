@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Truck } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Truck, Hash, Package, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/tms/PageHeader";
 import { EmptyState } from "@/components/tms/EmptyState";
@@ -9,8 +9,9 @@ import { useVehicles } from "@/hooks/use-tms";
 import type { Vehicle } from "@/lib/tms-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { FormField, IconInput } from "@/components/tms/FormField";
 import {
   Dialog,
   DialogContent,
@@ -200,32 +201,54 @@ function VehiclesPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Vehicle" : "Add Vehicle"}</DialogTitle>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl">
+              {editing ? "Edit Vehicle" : "Add New Vehicle"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {editing
+                ? "Update the vehicle's information below."
+                : "Register a new vehicle. Fields marked * are required."}
+            </p>
           </DialogHeader>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Plate Number</Label>
-              <Input
-                value={form.plate}
-                onChange={(e) => setForm({ ...form, plate: e.target.value })}
-                placeholder="ABC-1234"
-              />
-              {errors.plate && <p className="text-xs text-destructive">{errors.plate}</p>}
+          <Separator />
+          <form onSubmit={submit} className="space-y-5" noValidate>
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Identification
+              </h3>
             </div>
-            <div className="grid gap-2">
-              <Label>Model</Label>
-              <Input
+            <FormField label="Plate Number" required error={errors.plate}>
+              <IconInput
+                icon={Hash}
+                value={form.plate}
+                onChange={(e) => setForm({ ...form, plate: e.target.value.toUpperCase() })}
+                placeholder="ABC-1234"
+                maxLength={20}
+                invalid={!!errors.plate}
+                autoFocus
+              />
+            </FormField>
+            <FormField label="Model" required error={errors.model}>
+              <IconInput
+                icon={Truck}
                 value={form.model}
                 onChange={(e) => setForm({ ...form, model: e.target.value })}
                 placeholder="Volvo FH16"
+                maxLength={80}
+                invalid={!!errors.model}
               />
-              {errors.model && <p className="text-xs text-destructive">{errors.model}</p>}
+            </FormField>
+
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Specifications
+              </h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Type</Label>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormField label="Type">
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -235,19 +258,19 @@ function VehiclesPage() {
                     <SelectItem value="Pickup">Pickup</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Capacity</Label>
-                <Input
+              </FormField>
+              <FormField label="Capacity" required error={errors.capacity} hint={!errors.capacity ? "e.g. 20 tons" : undefined}>
+                <IconInput
+                  icon={Package}
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
                   placeholder="20 tons"
+                  maxLength={30}
+                  invalid={!!errors.capacity}
                 />
-                {errors.capacity && <p className="text-xs text-destructive">{errors.capacity}</p>}
-              </div>
+              </FormField>
             </div>
-            <div className="grid gap-2">
-              <Label>Status</Label>
+            <FormField label="Status">
               <Select
                 value={form.status}
                 onValueChange={(v: Vehicle["status"]) => setForm({ ...form, status: v })}
@@ -259,12 +282,15 @@ function VehiclesPage() {
                   <SelectItem value="Inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <DialogFooter>
+            </FormField>
+
+            <DialogFooter className="gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">{editing ? "Save" : "Add"}</Button>
+              <Button type="submit">
+                {editing ? "Save Changes" : "Add Vehicle"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
