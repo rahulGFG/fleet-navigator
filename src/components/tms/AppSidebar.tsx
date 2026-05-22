@@ -21,7 +21,7 @@ const items = [
 
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = (url: string) => (url === "/" ? path === "/" : path.startsWith(url));
+  const isActive = (url: string) => path === url || path.startsWith(url + "/");
 
   return (
     <Sidebar collapsible="icon">
