@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Truck, Hash, Package, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Truck, Hash, Package } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/tms/PageHeader";
 import { EmptyState } from "@/components/tms/EmptyState";
