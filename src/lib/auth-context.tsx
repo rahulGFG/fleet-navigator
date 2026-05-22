@@ -10,6 +10,7 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  /** true while we haven't yet read localStorage — prevents SSR/client mismatch */
   loading: boolean;
 }
 
@@ -22,17 +23,23 @@ interface AuthContextValue extends AuthState {
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 const TOKEN_KEY = "fleet_token";
-const USER_KEY = "fleet_user";
+const USER_KEY  = "fleet_user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = React.useState<AuthState>(() => {
-    // Rehydrate from localStorage on first render
-    if (typeof window === "undefined") return { user: null, token: null, loading: false };
-    const token = localStorage.getItem(TOKEN_KEY);
-    const raw = localStorage.getItem(USER_KEY);
-    const user = raw ? (JSON.parse(raw) as User) : null;
-    return { user, token, loading: false };
+  // Always start with loading:true so SSR and first client render match
+  const [state, setState] = React.useState<AuthState>({
+    user: null,
+    token: null,
+    loading: true,
   });
+
+  // Hydrate from localStorage only on the client, after first paint
+  React.useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const raw   = localStorage.getItem(USER_KEY);
+    const user  = raw ? (JSON.parse(raw) as User) : null;
+    setState({ user, token, loading: false });
+  }, []);
 
   const persist = (token: string, user: User) => {
     localStorage.setItem(TOKEN_KEY, token);
@@ -76,7 +83,7 @@ export function useAuth() {
   return ctx;
 }
 
-/** Returns the stored JWT token (used by api.ts) */
+/** Returns the stored JWT token synchronously (used by api.ts fetch calls) */
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);

@@ -19,8 +19,16 @@ import { Button } from "@/components/ui/button";
 import { LogOut, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Pages that don't need the sidebar or auth guard
 const PUBLIC_PATHS = ["/", "/login", "/register"];
+
+// ── Shared full-screen spinner (same markup on SSR + client) ─────────────────
+function FullScreenSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -47,7 +55,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -55,7 +62,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Something went wrong. Try refreshing or go home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -117,31 +124,33 @@ function RootComponent() {
 }
 
 function AppLayout() {
-  const router = useRouter();
+  const router   = useRouter();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const path = router.state.location.pathname;
+  const { user, loading, logout } = useAuth();
+  const path     = router.state.location.pathname;
   const isPublic = PUBLIC_PATHS.includes(path);
 
-  // ── Auth guard — runs AFTER render, never during ──────────────────────────
+  // ── Auth guard — only runs after localStorage has been read ───────────────
   useEffect(() => {
-    if (!isPublic && !user) {
+    if (!loading && !isPublic && !user) {
       navigate({ to: "/login" });
     }
-  }, [isPublic, user, navigate]);
+  }, [loading, isPublic, user, navigate]);
 
-  // Public pages (landing, login, register) — no sidebar
+  // ── While auth is hydrating from localStorage, show spinner ───────────────
+  // This is the SAME on SSR and client → no hydration mismatch
+  if (loading) {
+    return <FullScreenSpinner />;
+  }
+
+  // ── Public pages — no sidebar ─────────────────────────────────────────────
   if (isPublic) {
     return <Outlet />;
   }
 
-  // Protected page but not yet authenticated — show spinner while redirecting
+  // ── Protected but not authenticated — spinner while redirect fires ────────
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <FullScreenSpinner />;
   }
 
   // ── Authenticated app shell ───────────────────────────────────────────────
