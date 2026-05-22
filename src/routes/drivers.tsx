@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, User, IdCard, Phone, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/tms/PageHeader";
 import { EmptyState } from "@/components/tms/EmptyState";
@@ -9,8 +9,9 @@ import { useDrivers } from "@/hooks/use-tms";
 import type { Driver } from "@/lib/tms-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { FormField, IconInput } from "@/components/tms/FormField";
 import {
   Dialog,
   DialogContent,
@@ -200,51 +201,76 @@ function DriversPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit Driver" : "Add Driver"}</DialogTitle>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl">
+              {editing ? "Edit Driver" : "Add New Driver"}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {editing
+                ? "Update the driver's information below."
+                : "Fill in the driver's details. Fields marked * are required."}
+            </p>
           </DialogHeader>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Full Name</Label>
-              <Input
+          <Separator />
+          <form onSubmit={submit} className="space-y-5" noValidate>
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Personal info
+              </h3>
+            </div>
+            <FormField label="Full Name" required error={errors.name}>
+              <IconInput
+                icon={User}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="John Doe"
+                maxLength={100}
+                invalid={!!errors.name}
+                autoFocus
               />
-              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>License No.</Label>
-                <Input
+            </FormField>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormField label="License No." required error={errors.license}>
+                <IconInput
+                  icon={IdCard}
                   value={form.license}
                   onChange={(e) => setForm({ ...form, license: e.target.value })}
                   placeholder="DL-1234567"
+                  maxLength={50}
+                  invalid={!!errors.license}
                 />
-                {errors.license && <p className="text-xs text-destructive">{errors.license}</p>}
-              </div>
-              <div className="grid gap-2">
-                <Label>Phone</Label>
-                <Input
+              </FormField>
+              <FormField label="Phone" required error={errors.phone}>
+                <IconInput
+                  icon={Phone}
+                  type="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+1 555 0100"
+                  maxLength={30}
+                  invalid={!!errors.phone}
                 />
-                {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-              </div>
+              </FormField>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Experience</Label>
-                <Input
+
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Employment
+              </h3>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <FormField label="Experience" hint="e.g. 5 years">
+                <IconInput
+                  icon={Briefcase}
                   value={form.experience}
                   onChange={(e) => setForm({ ...form, experience: e.target.value })}
                   placeholder="5 years"
+                  maxLength={30}
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label>Status</Label>
+              </FormField>
+              <FormField label="Status">
                 <Select
                   value={form.status}
                   onValueChange={(v: Driver["status"]) => setForm({ ...form, status: v })}
@@ -256,13 +282,16 @@ function DriversPage() {
                     <SelectItem value="Off Duty">Off Duty</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </FormField>
             </div>
-            <DialogFooter>
+
+            <DialogFooter className="gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">{editing ? "Save" : "Add"}</Button>
+              <Button type="submit">
+                {editing ? "Save Changes" : "Add Driver"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
