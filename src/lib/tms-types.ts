@@ -1,8 +1,23 @@
+export type VehicleType =
+  | "Truck" | "Car" | "Bus" | "Bike" | "Van"
+  | "Mini Truck" | "Auto Rickshaw" | "Taxi" | "Ambulance"
+  | "Trailer" | "Pickup" | "Tempo" | "Scooter" | "Bicycle"
+  | "Electric Vehicle" | "School Bus" | "Luxury Bus"
+  | "Container Truck" | "Delivery Van" | "Tow Truck";
+
+export const VEHICLE_TYPES: VehicleType[] = [
+  "Truck", "Car", "Bus", "Bike", "Van",
+  "Mini Truck", "Auto Rickshaw", "Taxi", "Ambulance",
+  "Trailer", "Pickup", "Tempo", "Scooter", "Bicycle",
+  "Electric Vehicle", "School Bus", "Luxury Bus",
+  "Container Truck", "Delivery Van", "Tow Truck",
+];
+
 export type Vehicle = {
   id: string;
   plate: string;
   model: string;
-  type: string;
+  type: VehicleType | string;
   capacity: string;
   status: "Active" | "Maintenance" | "Inactive";
 };

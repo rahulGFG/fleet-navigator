@@ -8,6 +8,7 @@ import {
   Scripts,
   useNavigate,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -15,7 +16,7 @@ import { AppSidebar } from "@/components/tms/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Pages that don't need the sidebar or auth guard
@@ -58,10 +59,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
+            onClick={() => { router.invalidate(); reset(); }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
@@ -97,9 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
+      <head><HeadContent /></head>
       <body>
         {children}
         <Scripts />
@@ -110,7 +106,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -121,28 +116,35 @@ function RootComponent() {
   );
 }
 
-/** Decides which shell to render based on path + auth state */
 function AppLayout() {
   const router = useRouter();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const path = router.state.location.pathname;
-
   const isPublic = PUBLIC_PATHS.includes(path);
 
-  // Redirect unauthenticated users away from protected pages
-  if (!isPublic && !user) {
-    // Use setTimeout to avoid calling navigate during render
-    setTimeout(() => navigate({ to: "/login" }), 0);
-    return null;
-  }
+  // ── Auth guard — runs AFTER render, never during ──────────────────────────
+  useEffect(() => {
+    if (!isPublic && !user) {
+      navigate({ to: "/login" });
+    }
+  }, [isPublic, user, navigate]);
 
-  // Landing page and auth pages — no sidebar
+  // Public pages (landing, login, register) — no sidebar
   if (isPublic) {
     return <Outlet />;
   }
 
-  // Authenticated app shell with sidebar
+  // Protected page but not yet authenticated — show spinner while redirecting
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // ── Authenticated app shell ───────────────────────────────────────────────
   const handleLogout = () => {
     logout();
     toast.success("Signed out");
@@ -159,11 +161,10 @@ function AppLayout() {
               <SidebarTrigger />
               <span className="font-semibold">Transport Management</span>
             </div>
-            {/* User info + logout */}
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                <span>{user?.name}</span>
+                <span>{user.name}</span>
               </div>
               <Button
                 variant="ghost"

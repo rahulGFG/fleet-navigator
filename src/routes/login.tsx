@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,14 @@ function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  // Already logged in → go to dashboard
-  if (user) {
-    navigate({ to: "/dashboard" });
-    return null;
-  }
+  // Redirect after render — never call navigate() during render
+  useEffect(() => {
+    if (user) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [user, navigate]);
+
+  if (user) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
