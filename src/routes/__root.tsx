@@ -6,12 +6,20 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useNavigate,
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/tms/AppSidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import { toast } from "sonner";
+
+// Pages that don't need the sidebar or auth guard
+const PUBLIC_PATHS = ["/", "/login", "/register"];
 
 function NotFoundComponent() {
   return (
@@ -75,21 +83,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { title: "FleetFlow — Transport Management" },
+      { name: "description", content: "Fleet Navigator Transport Management System" },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -113,34 +110,77 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
-  const path = router.state.location.pathname;
-  const isLanding = path === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isLanding ? (
-        <>
-          <Outlet />
-          <Toaster />
-        </>
-      ) : (
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full bg-background">
-            <AppSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <header className="h-14 flex items-center gap-2 border-b bg-card/50 backdrop-blur px-4 sticky top-0 z-10">
-                <SidebarTrigger />
-                <span className="font-semibold">Transport Management</span>
-              </header>
-              <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                <Outlet />
-              </main>
-            </div>
-          </div>
-          <Toaster />
-        </SidebarProvider>
-      )}
+      <AuthProvider>
+        <AppLayout />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+/** Decides which shell to render based on path + auth state */
+function AppLayout() {
+  const router = useRouter();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const path = router.state.location.pathname;
+
+  const isPublic = PUBLIC_PATHS.includes(path);
+
+  // Redirect unauthenticated users away from protected pages
+  if (!isPublic && !user) {
+    // Use setTimeout to avoid calling navigate during render
+    setTimeout(() => navigate({ to: "/login" }), 0);
+    return null;
+  }
+
+  // Landing page and auth pages — no sidebar
+  if (isPublic) {
+    return <Outlet />;
+  }
+
+  // Authenticated app shell with sidebar
+  const handleLogout = () => {
+    logout();
+    toast.success("Signed out");
+    navigate({ to: "/login" });
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-14 flex items-center justify-between gap-2 border-b bg-card/50 backdrop-blur px-4 sticky top-0 z-10">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <span className="font-semibold">Transport Management</span>
+            </div>
+            {/* User info + logout */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span>{user?.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign out</span>
+              </Button>
+            </div>
+          </header>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
