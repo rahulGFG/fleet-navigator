@@ -113,24 +113,34 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const path = router.state.location.pathname;
+  const isLanding = path === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <header className="h-14 flex items-center gap-2 border-b bg-card/50 backdrop-blur px-4 sticky top-0 z-10">
-              <SidebarTrigger />
-              <span className="font-semibold">Transport Management</span>
-            </header>
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">
-              <Outlet />
-            </main>
+      {isLanding ? (
+        <>
+          <Outlet />
+          <Toaster />
+        </>
+      ) : (
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full bg-background">
+            <AppSidebar />
+            <div className="flex-1 flex flex-col min-w-0">
+              <header className="h-14 flex items-center gap-2 border-b bg-card/50 backdrop-blur px-4 sticky top-0 z-10">
+                <SidebarTrigger />
+                <span className="font-semibold">Transport Management</span>
+              </header>
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                <Outlet />
+              </main>
+            </div>
           </div>
-        </div>
-        <Toaster />
-      </SidebarProvider>
+          <Toaster />
+        </SidebarProvider>
+      )}
     </QueryClientProvider>
   );
 }

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as TripsRouteImport } from './routes/trips'
 import { Route as DriversRouteImport } from './routes/drivers'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VehiclesRoute = VehiclesRouteImport.update({
@@ -29,6 +30,11 @@ const DriversRoute = DriversRouteImport.update({
   path: '/drivers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/drivers': typeof DriversRoute
   '/trips': typeof TripsRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/drivers': typeof DriversRoute
   '/trips': typeof TripsRoute
   '/vehicles': typeof VehiclesRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
   '/drivers': typeof DriversRoute
   '/trips': typeof TripsRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/drivers' | '/trips' | '/vehicles'
+  fullPaths: '/' | '/dashboard' | '/drivers' | '/trips' | '/vehicles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/drivers' | '/trips' | '/vehicles'
-  id: '__root__' | '/' | '/drivers' | '/trips' | '/vehicles'
+  to: '/' | '/dashboard' | '/drivers' | '/trips' | '/vehicles'
+  id: '__root__' | '/' | '/dashboard' | '/drivers' | '/trips' | '/vehicles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
   DriversRoute: typeof DriversRoute
   TripsRoute: typeof TripsRoute
   VehiclesRoute: typeof VehiclesRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DriversRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
   DriversRoute: DriversRoute,
   TripsRoute: TripsRoute,
   VehiclesRoute: VehiclesRoute,
